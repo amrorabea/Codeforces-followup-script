@@ -18,7 +18,7 @@ Time = 5
 loading_time = 10
 attempts = 3
 
-url = ""
+url = "https://codeforces.com/contest/1927/standings/friends/true"
 
 
 # ================================================================
@@ -36,8 +36,6 @@ def Login():  # LOGIN FIRST
     except:
         print("Logging in error")
 
-    time.sleep(loading_time)
-    driver.get(url)
     time.sleep(loading_time)
     print("----->")
 
@@ -114,7 +112,6 @@ def extractParticipants(standings):
             except:
                 print("")
 
-    print("Participants extracted successfully...")
     return Results
 
 
@@ -134,7 +131,6 @@ def storeData(Results, numOfProblems):
                              "Score": f"{round(((solved + upSolved / 2) / numOfProblems) * 100)}%"
                              })
 
-    print("Preparing to write on file...")
     keys = list(ResultsCount[0].keys())  # getting the head of the File
     with open('file.csv', 'w', newline='', encoding='utf-8') as file:
         writer = csv.DictWriter(file, keys)
@@ -142,36 +138,55 @@ def storeData(Results, numOfProblems):
 
         for result in ResultsCount:
             writer.writerow(result)
-        print("Database Updated!")
 
 
 def main():
+    prevResults = {}
     try:
         Login()
     except Exception:
-        print(f"Problems with logging in {Exception}")
+        print(f"Problem while logging in {Exception}")
 
     Results = title = numOfProblems = standings = 0
-    try:
-        title, numOfProblems, standings = getTitleNumProbStandings()
-    except:
-        print("Error On Title | numOfProblems | standings")
 
-    if not title and not numOfProblems and not standings:
-        return
+    pages = int(input("Enter the number of pages to scrape: "))
+    for page in range(1, pages+1):
+        time.sleep(loading_time)
+        print(f"Page number {page}")
+        driver.get(url+f"/page/{page}")
 
-    try:
-        Results = extractParticipants(standings)
-    except:
-        print("Error on extracting data")
+        if page == 1:
+            print("Extracting Title | Number Of Problems | Standing")
+            try:
+                title, numOfProblems, standings = getTitleNumProbStandings()
+                print("Title | Number Of Problems | Standing Extracted Successfully!")
+            except Exception:
+                print(f"Error On Title | numOfProblems | standings:: {Exception}")
 
-    if not Results:
-        return
+            if not title and not numOfProblems and not standings:
+                break
 
+        try:
+            Results = extractParticipants(standings)
+            print("Participants extracted successfully!")
+        except Exception:
+            print(f"Error while Extracting Participants:: {Exception}")
+
+        if not Results:
+            break
+
+        if Results == prevResults:
+            print("No more pages to scrape")
+            break
+
+        prevResults = Results
+
+    print("Preparing to write on file...")
     try:
         storeData(Results, numOfProblems)
+        print("Database Updated!")
     except Exception:
-        print(f"couldnt store data due to {Exception}")
+        print(f"Couldn't store data due to {Exception}")
 
     print("DONE")
     time.sleep(Time)

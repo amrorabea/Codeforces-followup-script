@@ -18,7 +18,7 @@ Time = 5
 loading_time = 10
 attempts = 3
 
-url = "https://codeforces.com/contest/1931/standings/friends/true"
+url = "https://codeforces.com/contest/1928/standings/friends/true"
 
 Results = {}
 ResultsCount = []
@@ -43,7 +43,7 @@ def Login():  # LOGIN FIRST
     driver.get(url)
     time.sleep(loading_time)
 
-    contest_title = driver.find_element(By.XPATH, ".//div[@class='contest-name']"). \
+    contest_title = driver.find_element(By.XPATH, ".//div[@style='margin:0.5em auto;']"). \
         find_element(By.TAG_NAME, "a").text
     print("Contest Title: ", contest_title)
     standings = driver.find_element(By.TAG_NAME, "tbody").find_elements(By.TAG_NAME, 'tr')

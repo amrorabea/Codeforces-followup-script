@@ -18,10 +18,7 @@ Time = 5
 loading_time = 10
 attempts = 3
 
-url = "https://codeforces.com/contest/1928/standings/friends/true"
-
-Results = {}
-ResultsCount = []
+url = ""
 
 
 # ================================================================
@@ -42,7 +39,10 @@ def Login():  # LOGIN FIRST
     time.sleep(loading_time)
     driver.get(url)
     time.sleep(loading_time)
+    print("----->")
 
+
+def getTitleNumProbStandings():
     contest_title = driver.find_element(By.XPATH, ".//div[@style='margin:0.5em auto;']"). \
         find_element(By.TAG_NAME, "a").text
     print("Contest Title: ", contest_title)
@@ -65,8 +65,12 @@ def Login():  # LOGIN FIRST
 
     # subtract 4 cuz there is some cells that doesn't represent questions (score, hacks, leaderboard, ..)
     print("Number of problems: ", numOfProblems)
-    print("-------------------")
+    print("----->")
+    return contest_title, numOfProblems, standings
+
+def extractParticipants(standings):
     # dict = {name : {from 1 - len of problems}}
+    Results = {}
     for participant in standings:
         # first we want the name of the participant
         # then we get the problems
@@ -111,6 +115,11 @@ def Login():  # LOGIN FIRST
                 print("")
 
     print("Participants extracted successfully...")
+    return Results
+
+
+def storeData(Results, numOfProblems):
+    ResultsCount = []
     for name, values in Results.items():
         solved = 0
         upSolved = 0
@@ -137,7 +146,34 @@ def Login():  # LOGIN FIRST
 
 
 def main():
-    Login()
+    try:
+        Login()
+    except Exception:
+        print(f"Problems with logging in {Exception}")
+
+    Results = title = numOfProblems = standings = 0
+    try:
+        title, numOfProblems, standings = getTitleNumProbStandings()
+    except:
+        print("Error On Title | numOfProblems | standings")
+
+    if not title and not numOfProblems and not standings:
+        return
+
+    try:
+        Results = extractParticipants(standings)
+    except:
+        print("Error on extracting data")
+
+    if not Results:
+        return
+
+    try:
+        storeData(Results, numOfProblems)
+    except Exception:
+        print(f"couldnt store data due to {Exception}")
+
+    print("DONE")
     time.sleep(Time)
     driver.quit()
 

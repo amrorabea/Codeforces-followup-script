@@ -1,15 +1,15 @@
 import csv
-import os
 import time
-
-from dotenv import load_dotenv
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
-load_dotenv()
 
-email = os.getenv('HANDLE')
-password = os.getenv('PASSWORD')
+email = ""
+password = ""
 
 driver = webdriver.Chrome()
 
@@ -18,7 +18,7 @@ Time = 5
 loading_time = 10
 attempts = 3
 
-url = os.getenv('URL')
+url = "https://codeforces.com/contest/1931/standings/friends/true"
 
 Results = {}
 ResultsCount = []
@@ -43,14 +43,26 @@ def Login():  # LOGIN FIRST
     driver.get(url)
     time.sleep(loading_time)
 
-    contest_title = driver.find_element(By.XPATH, ".//div[@class='contest-name title']"). \
+    contest_title = driver.find_element(By.XPATH, ".//div[@class='contest-name']"). \
         find_element(By.TAG_NAME, "a").text
     print("Contest Title: ", contest_title)
     standings = driver.find_element(By.TAG_NAME, "tbody").find_elements(By.TAG_NAME, 'tr')
     standings = standings[1:]
 
-    numOfProblems = standings[0].find_elements(By.TAG_NAME, "td")
-    numOfProblems = len(numOfProblems) - 4  # this is our range now
+    global letters_size  # Declare letters_size as a global variable
+
+    WebDriverWait(driver, 1).until(
+        EC.presence_of_element_located((By.CLASS_NAME, 'standings'))
+    )
+
+    table_headers = driver.find_elements(By.XPATH, "//table[@class='standings']//th[contains(@class, 'top')]/a")
+    letters = [th.text.strip() for th in table_headers]
+    letters_string = ', '.join(letters)
+    letters_size = len(letters)  # Update the global variable letters_size
+    print('Problems:', letters_string)
+
+    numOfProblems = len(letters)
+
     # subtract 4 cuz there is some cells that doesn't represent questions (score, hacks, leaderboard, ..)
     print("Number of problems: ", numOfProblems)
     print("-------------------")
@@ -73,18 +85,30 @@ def Login():  # LOGIN FIRST
         problems = participant.find_elements(By.TAG_NAME, "td")
         if '*' in problems[1].text:
             flag = 1  # if we have the flag equal to 1 then we put 1 if not we put 2
-        problems = problems[4:]
-        for i in range(numOfProblems):
+        i = 1
+        for problem in problems:
             try:
-                x = problems[i].find_element(By.XPATH, ".//span[@class='cell-passed-system-test']")
-                if flag != 1:
-                    Results[name][i] = 2
-                else:
-                    if Results[name][i] != 2:
-                        Results[name][i] = 1
+                found = (problem.get_attribute("problemid") is not None)
+                if found:
+                    try:
+                        x = (problem.get_attribute("acceptedsubmissionid") is not None)
+                        if x:
+                            if problem.text.find(":") != -1:
+                                Results[name][i] = 2
+                                # print(f"{name} solved problem {i}")
+                            else:
+                                # print("been here")
+                                if i not in Results[name].keys():
+                                    Results[name][i] = 1
+                                    # print(f"{name} upsolved problem {i}")
+                                elif Results[name][i] == 0:
+                                    Results[name][i] = 1
+                    except:
+                        if i not in Results[name]:
+                            Results[name][i] = 0
+                    i += 1
             except:
-                if i not in Results[name]:
-                    Results[name][i] = 0
+                print("")
 
     print("Participants extracted successfully...")
     for name, values in Results.items():

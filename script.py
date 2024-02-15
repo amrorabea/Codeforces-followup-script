@@ -18,8 +18,8 @@ Time = 5
 loading_time = 10
 attempts = 3
 
-url = "https://codeforces.com/contest/1927/standings/friends"
-# iadon
+url = "https://codeforces.com/contest/1927/standings/friends/true"
+
 
 # ================================================================
 def Login():  # LOGIN FIRST
